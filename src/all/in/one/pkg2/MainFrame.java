@@ -565,6 +565,10 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
 
     class Task extends SwingWorker<Void, Void> {
 
+        /* This class should be separated 
+           Make a class per Tab
+         */
+        
         public int selTab = 0;
         boolean smthFound = false;
 
@@ -609,7 +613,6 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
                     progress = (i + 1) * 100 / filesArray.length;
                     setProgress(progress);
                 }
-
 
             } else if (selTab == 1) {
                 // Action for Find Tab

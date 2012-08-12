@@ -48,7 +48,12 @@ public class Policy {
                 Node driverIdInfo = subNodeList.item(1);
                 Node itemId = driverIdInfo.getFirstChild().getNextSibling();
                 String str = itemId.getTextContent();
-                System.out.println("id: " + str);
+                
+                if (str != null && !str.isEmpty()) {
+                    System.out.println("id: " + str);
+                } else {
+                    System.out.println("ID is null or empty");
+                }
             }
         } else {
         }
