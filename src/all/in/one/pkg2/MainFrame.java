@@ -424,7 +424,7 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
         prgBar.setEnabled(true);
         prgBar.setStringPainted(true);
 
-        finder = new MainFrame.Task(selectedTab);
+        finder = new MainFrame.Task();
         finder.addPropertyChangeListener(this);
         finder.execute();
     }//GEN-LAST:event_btn_SearchActionPerformed
@@ -459,7 +459,7 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
             txtA_Error_Files.setEnabled(true);
             btn_Correct.setEnabled(false);
 
-            corrector = new MainFrame.Task(selectedTab);
+            corrector = new MainFrame.Task();
             corrector.addPropertyChangeListener(this);
             corrector.execute();
         }
@@ -565,100 +565,53 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
 
     class Task extends SwingWorker<Void, Void> {
 
-        /* This class should be separated 
-           Make a class per Tab
-         */
-        
-        public int selTab = 0;
         boolean smthFound = false;
-
-        public Task() {
-        }
-
-        public Task(int selTab) {
-            this.selTab = selTab;
-        }
 
         @Override
         public Void doInBackground() {
+            // Action for Find Tab
+            int progress;
+            setProgress(0);
 
-            if (selTab == 0) {
-                // TODO Action for Correct Tab
-                int progress;
-                setProgress(0);
+            for (int i = 0; i < filesArray.length; i++) {
+                try {
+                    Thread.sleep(5);
+                } catch (InterruptedException ignore) {
+                }
+                String fileContent = "";
+                try {
+                    File file = filesArray[i];
+                    DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+                    Document doc = dBuilder.parse(file);
+                    doc.getDocumentElement().normalize();
 
-                for (int i = 0; i < filesArray.length; i++) {
-                    try {
-                        Thread.sleep(5);
-                    } catch (InterruptedException ignore) {
-                    }
-                    try {
-                        File file = filesArray[i];
-
-                        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-                        DocumentBuilder dBuilder2 = dbFactory.newDocumentBuilder();
-                        Document doc = dBuilder2.parse(file);
-                        doc.getDocumentElement().normalize();
-
-                        Element root = doc.getDocumentElement();
-                        
-                        Policy policy = new Policy(root);
-                        policy.detectPolType();
-                        policy.checkIds();
-                    } catch (ParserConfigurationException | SAXException | IOException ev) {
-                        ev.getMessage();
-                    }
-
-                    // Calculating the value for progress bar
-                    progress = (i + 1) * 100 / filesArray.length;
-                    setProgress(progress);
+                    Element root = doc.getDocumentElement();
+                    fileContent = root.getTextContent().toLowerCase();
+                } catch (ParserConfigurationException | SAXException | IOException ev) {
                 }
 
-            } else if (selTab == 1) {
-                // Action for Find Tab
-                int progress;
-                setProgress(0);
+                if (fileContent.indexOf(getSearchedStr().toLowerCase()) != -1) { // String Found
+                    // Activate txt found area
+                    txtA_Found.setEnabled(true);
+                    txtA_Found.requestFocusInWindow();
+                    btn_Copy.setEnabled(true);
+                    smthFound = true;
 
-                for (int i = 0; i < filesArray.length; i++) {
-                    try {
-                        Thread.sleep(5);
-                    } catch (InterruptedException ignore) {
+                    if (i != 0 && !"".equals(txtA_Found.getText())) {
+                        txtA_Found.append("\n");
                     }
-                    String fileContent = "";
-                    try {
-                        File file = filesArray[i];
-                        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-                        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-                        Document doc = dBuilder.parse(file);
-                        doc.getDocumentElement().normalize();
-
-                        Element root = doc.getDocumentElement();
-                        fileContent = root.getTextContent().toLowerCase();
-                    } catch (ParserConfigurationException | SAXException | IOException ev) {
+                    txtA_Found.append(txtA_Found.getLineCount() + ".  " + filesArray[i].getName());
+                    txtA_Found.setCaretPosition(txtA_Found.getDocument().getLength());
+                    if (txtA_Found.getLineCount() == 1) {
+                        lbl_Nr_Founded_Files.setText("1 file contains the searched word.");
+                    } else {
+                        lbl_Nr_Founded_Files.setText(txtA_Found.getLineCount() + " files contain the searched word.");
                     }
-
-                    if (fileContent.indexOf(getSearchedStr().toLowerCase()) != -1) { // String Found
-                        // Activate txt found area
-                        txtA_Found.setEnabled(true);
-                        txtA_Found.requestFocusInWindow();
-                        btn_Copy.setEnabled(true);
-                        smthFound = true;
-
-                        if (i != 0 && !"".equals(txtA_Found.getText())) {
-                            txtA_Found.append("\n");
-                        }
-                        txtA_Found.append(txtA_Found.getLineCount() + ".  " + filesArray[i].getName());
-                        txtA_Found.setCaretPosition(txtA_Found.getDocument().getLength());
-                        if (txtA_Found.getLineCount() == 1) {
-                            lbl_Nr_Founded_Files.setText("1 file contains the searched word.");
-                        } else {
-                            lbl_Nr_Founded_Files.setText(txtA_Found.getLineCount() + " files contain the searched word.");
-                        }
-                    }
-                    // Calculating the value for progress bar
-                    progress = (i + 1) * 100 / filesArray.length;
-                    setProgress(progress);
                 }
+                // Calculating the value for progress bar
+                progress = (i + 1) * 100 / filesArray.length;
+                setProgress(progress);
             }
             return null;
         }
@@ -668,18 +621,60 @@ public class MainFrame extends javax.swing.JFrame implements PropertyChangeListe
          */
         @Override
         public void done() {
-            if (selTab == 0) {
-                // TODO code for Correct Tab
-            } else if (selTab == 1) {
-                if (!smthFound) {
-                    txtA_Found.setEnabled(true);
-                    txtA_Found.requestFocusInWindow();
-                    txtA_Found.setForeground(Color.RED);
-                    txtA_Found.append("Nothing found.");
-                    btn_Copy.setEnabled(false);
-                    Toolkit.getDefaultToolkit().beep();
-                }
+            if (!smthFound) {
+                txtA_Found.setEnabled(true);
+                txtA_Found.requestFocusInWindow();
+                txtA_Found.setForeground(Color.RED);
+                txtA_Found.append("Nothing found.");
+                btn_Copy.setEnabled(false);
+                Toolkit.getDefaultToolkit().beep();
             }
+            setCursor(null); //turn off the wait cursor
+        }
+    }
+
+    class CorrectTask extends SwingWorker<Void, Void> {
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            // TODO Action for Correct Tab
+            int progress;
+            setProgress(0);
+
+            for (int i = 0; i < filesArray.length; i++) {
+                try {
+                    Thread.sleep(5);
+                } catch (InterruptedException ignore) {
+                }
+                try {
+                    File file = filesArray[i];
+
+                    DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder dBuilder2 = dbFactory.newDocumentBuilder();
+                    Document doc = dBuilder2.parse(file);
+                    doc.getDocumentElement().normalize();
+
+                    Element root = doc.getDocumentElement();
+
+                    Policy policy = new Policy(root);
+                    policy.detectPolType();
+                    policy.checkIds();
+                } catch (ParserConfigurationException | SAXException | IOException ev) {
+                    ev.getMessage();
+                }
+
+                // Calculating the value for progress bar
+                progress = (i + 1) * 100 / filesArray.length;
+                setProgress(progress);
+            }
+            return null;
+        }
+
+        /*
+         * Executed in event dispatching thread
+         */
+        @Override
+        public void done() {
             setCursor(null); //turn off the wait cursor
         }
     }
